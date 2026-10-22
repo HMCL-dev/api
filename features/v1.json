@@ -1,11 +1,18 @@
 {
     "features": {
     },
-    "overrides": {
-        "CN": {
-            "offline_account": true,
-            "bmclapi": true,
-            "mcim": true
+    "overrides": [
+        {
+            "conditions": {
+                "regions": [
+                    "CN"
+                ]
+            },
+            "features": {
+                "offline_account": true,
+                "bmclapi": true,
+                "mcim": true
+            }
         }
-    }
+    ]
 }
