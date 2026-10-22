@@ -1,0 +1,65 @@
+name: Deploy JSON to GitHub Pages
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v6
+
+      - name: Configure GitHub Pages
+        uses: actions/configure-pages@v5
+
+      - name: Build JSON endpoints
+        shell: python3 {0}
+        run: |
+          import json
+          import subprocess
+          from pathlib import Path
+
+          output = Path("_site")
+          output.mkdir()
+          sources = subprocess.check_output(
+              ["git", "ls-files", "-z", "--", "*.json"]
+          ).decode("utf-8").split("\0")
+
+          for name in filter(None, sources):
+              source = Path(name)
+              data = json.loads(source.read_text(encoding="utf-8"))
+              target = output / source.with_suffix("")
+              target.parent.mkdir(parents=True, exist_ok=True)
+              target.write_text(
+                  json.dumps(data, ensure_ascii=False, separators=(",", ":"), allow_nan=False),
+                  encoding="utf-8",
+              )
+
+      - name: Upload GitHub Pages artifact
+        uses: actions/upload-pages-artifact@v4
+        with:
+          path: _site
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
