@@ -1,0 +1,101 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "title": "HMCL Online Feature Configuration v1",
+    "description": "Default feature definitions and ordered regional overrides. Unknown fields are ignored except inside conditions.",
+    "type": "object",
+    "properties": {
+        "features": {
+            "$ref": "#/$defs/features"
+        },
+        "overrides": {
+            "$ref": "#/$defs/overrides"
+        }
+    },
+    "$defs": {
+        "features": {
+            "description": "Definitions keyed by case-sensitive feature identifiers. Missing or null means no definitions at this node. Absent features use the caller's default.",
+            "type": ["object", "null"],
+            "additionalProperties": {
+                "$ref": "#/$defs/featureState"
+            }
+        },
+        "featureState": {
+            "description": "A boolean enabled state without a reason, or a complete feature definition.",
+            "oneOf": [
+                {
+                    "type": "boolean"
+                },
+                {
+                    "type": "object",
+                    "required": ["enabled"],
+                    "properties": {
+                        "enabled": {
+                            "description": "Whether the feature is allowed.",
+                            "type": "boolean"
+                        },
+                        "reason": {
+                            "$ref": "#/$defs/localizedText"
+                        }
+                    }
+                }
+            ]
+        },
+        "localizedText": {
+            "description": "Optional explanation for a disabled feature. A string applies to every locale. A nonempty object maps language keys such as en, zh-Hans, or default to text. Missing or null means no explanation.",
+            "oneOf": [
+                {
+                    "type": ["string", "null"]
+                },
+                {
+                    "type": "object",
+                    "minProperties": 1,
+                    "additionalProperties": {
+                        "description": "Localized text. Numeric values are also accepted and converted to strings by the Gson reader.",
+                        "type": ["string", "number"]
+                    }
+                }
+            ]
+        },
+        "overrides": {
+            "description": "Rules applied in depth-first array order. Each matching rule applies its features before its children; later siblings override earlier subtrees. Missing or null means no rules.",
+            "type": ["array", "null"],
+            "items": {
+                "$ref": "#/$defs/overrideRule"
+            }
+        },
+        "overrideRule": {
+            "description": "Replaces entire feature definitions, including any reason. This rule is evaluated only when all ancestor conditions match.",
+            "type": "object",
+            "required": ["conditions"],
+            "properties": {
+                "conditions": {
+                    "$ref": "#/$defs/conditions"
+                },
+                "features": {
+                    "$ref": "#/$defs/features"
+                },
+                "overrides": {
+                    "$ref": "#/$defs/overrides"
+                }
+            }
+        },
+        "conditions": {
+            "description": "Matches any listed region, ignoring case. An unknown user region does not match. Unsupported condition fields are rejected.",
+            "type": "object",
+            "required": ["regions"],
+            "additionalProperties": false,
+            "properties": {
+                "regions": {
+                    "description": "A nonempty array of nonblank region codes. Codes are not trimmed or restricted to a fixed list; duplicates are allowed.",
+                    "type": "array",
+                    "minItems": 1,
+                    "items": {
+                        "type": "string",
+                        "description": "Contains at least one character that is not whitespace according to Java String.isBlank().",
+                        "pattern": "[^\u0009-\u000D\u001C-\u0020\u1680\u2000-\u2006\u2008-\u200A\u2028\u2029\u205F\u3000]"
+                    }
+                }
+            }
+        }
+    }
+}

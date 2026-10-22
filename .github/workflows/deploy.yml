@@ -32,7 +32,7 @@ jobs:
           output = Path("_site")
           output.mkdir()
           sources = subprocess.check_output(
-              ["git", "ls-files", "-z", "--", "*.json"]
+              ["git", "ls-files", "-z", "--", "*.json", ":(exclude)*.schema.json"]
           ).decode("utf-8").split("\0")
 
           for name in filter(None, sources):
