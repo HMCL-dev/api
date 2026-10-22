@@ -1,9 +1,12 @@
 {
     "$schema": "https://json-schema.org/draft/2020-12/schema",
     "title": "HMCL Online Feature Configuration v1",
-    "description": "Default feature definitions and ordered regional overrides. Unknown fields are ignored except inside conditions.",
+    "description": "A node in a tree of feature definitions and ordered overrides. Conditions apply to the entire subtree. Matching nodes replace entire feature definitions, including any reason. Unknown fields are ignored except inside conditions.",
     "type": "object",
     "properties": {
+        "conditions": {
+            "$ref": "#/$defs/conditions"
+        },
         "features": {
             "$ref": "#/$defs/features"
         },
@@ -13,7 +16,7 @@
     },
     "$defs": {
         "features": {
-            "description": "Definitions keyed by case-sensitive feature identifiers. Missing or null means no definitions at this node. Absent features use the caller's default.",
+            "description": "Definitions keyed by case-sensitive feature identifiers. Missing or null means no definitions at this node. The caller's default is used when no matching node defines a feature.",
             "type": ["object", "null"],
             "additionalProperties": {
                 "$ref": "#/$defs/featureState"
@@ -57,31 +60,15 @@
             ]
         },
         "overrides": {
-            "description": "Rules applied in depth-first array order. Each matching rule applies its features before its children; later siblings override earlier subtrees. Missing or null means no rules.",
+            "description": "Child configurations applied in depth-first array order. Each matching node applies its features before its children; later siblings override earlier subtrees. A child is evaluated only when all ancestor conditions match. Missing or null means no children.",
             "type": ["array", "null"],
             "items": {
-                "$ref": "#/$defs/overrideRule"
-            }
-        },
-        "overrideRule": {
-            "description": "Replaces entire feature definitions, including any reason. This rule is evaluated only when all ancestor conditions match.",
-            "type": "object",
-            "required": ["conditions"],
-            "properties": {
-                "conditions": {
-                    "$ref": "#/$defs/conditions"
-                },
-                "features": {
-                    "$ref": "#/$defs/features"
-                },
-                "overrides": {
-                    "$ref": "#/$defs/overrides"
-                }
+                "$ref": "#"
             }
         },
         "conditions": {
-            "description": "Matches any listed region, ignoring case. An unknown user region does not match. Unsupported condition fields are rejected.",
-            "type": "object",
+            "description": "Missing or null matches unconditionally, including an unknown user region. Otherwise, matches any listed region, ignoring case; an unknown user region does not match. Unsupported condition fields are rejected.",
+            "type": ["object", "null"],
             "required": ["regions"],
             "additionalProperties": false,
             "properties": {
